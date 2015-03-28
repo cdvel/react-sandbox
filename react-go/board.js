@@ -77,7 +77,85 @@ Board.prototype.play = function(i,j){
 
 	});
 
-	//detect suicide
-	// TODO: continue
-	//http://cjlarose.com/2014/01/09/react-board-game-tutorial.html
+	// suicide detection
+	if(_.isEmpty(captured) && this.get_group(i, j)["liberties"] == 0){
+		this.board[i][j] = Board.EMPTY;
+		this.attempted_suicide = true;
+		return false;
+	}
+
+	var self = this;
+	_.each(captured, function(group){
+		_.each(group["stones"], function(stone) {
+			self.board[stone[0]][stone[1]] = Board.EMPTY;
+		});
+	});
+
+	if (atari)
+		this.in_atari = true;
+
+	this.last_move_passed = false;
+	this.switch_player();
+	return true;
+
+};
+
+//Given a posiion return list of orthagonally adjacent intersecions
+
+Board.prototype.get_adjacent_intersections = function(i, j){
+	var neighbors = [];
+	if (i > 0)
+		neighbors.push([i - 1, j]);
+	if (j < this.size -1)
+		neighbors.push([i, j + 1]);
+	if (i < this.size - 1)
+		neighbors.push([i + 1, j]);
+	if (j > 0)
+		neighbors.push([i, j - 1]);
+	return neighbors;
+};
+
+ /* "Performs a breadth-first search about an (i,j) position to find recursively
+  * orthagonally adjacent stones of the same color (stones with which it shares
+  * liberties). Returns null for if there is no stone at the specified position,
+  * otherwise returns an object with two keys: "liberties", specifying the
+  * number of liberties the group has, and "stones", the list of [i,j]
+  * coordinates of the group's members."
+*/
+
+Board.prototype.get_group = function(i, j){
+
+	var color = this.board[i][j];
+	if (color == Board.EMPTY)
+		return null;
+
+	var visited = {}; //0(1) lookups
+	var visited_list - []; //for returning
+	var queue = [[i, j]];
+	var count = 0;
+
+	while (queue.length > 0){
+		var stone = queue.pop();
+		if (visited[stone])
+			continue;
+
+		var neighbors = this.get_adjacent_intersections(stone[0], stone[1]);
+		var self = this;
+		_.each(neighbors, function(n){
+			var state = self.board[n[0]][n[1]];
+			if (state == Board.EMPTY)
+				count++;
+			if (state == color)
+				queue.push([n[0], n[1]]);
+		});
+
+		visited[stone] = true;
+		visited_list.push(stone);
+	}
+
+	return {
+		"liberties": count,
+		"stones": visited_list
+	};
+
 }
