@@ -130,7 +130,7 @@ Board.prototype.get_group = function(i, j){
 		return null;
 
 	var visited = {}; //0(1) lookups
-	var visited_list - []; //for returning
+	var visited_list = []; //for returning
 	var queue = [[i, j]];
 	var count = 0;
 
